@@ -8,7 +8,7 @@ import {
 } from '../paths.js';
 import {
   ensureDir, fail, success, info, warn,
-  streamExec, quietExec, isAppleSilicon, checkCommand, nproc
+  streamExec, quietExec, isAppleSilicon, checkCommand, nproc, getHfVersion
 } from '../utils.js';
 
 export function registerInstall(program) {
@@ -283,24 +283,58 @@ async function installHuggingface(options) {
   console.log(chalk.bold.yellow('  HuggingFace CLI'));
   console.log(chalk.dim('  ─────────────────────────'));
 
-  if (!(await checkCommand('pip3'))) fail('pip3 is not installed', 'Install pip3 first');
-
-  const existing = await quietExec('huggingface-cli', ['--version']);
+  const existing = await getHfVersion();
   if (existing && !options.force) {
-    info(`Already installed: ${chalk.bold(existing)}`);
+    info(`Already installed: ${chalk.bold(`${existing.cli} ${existing.version}`)}`);
     info('Use --force to upgrade');
     return;
   }
 
-  info('Installing/upgrading huggingface_hub[cli]…');
-  await streamExec('pip3', ['install', '-U', 'huggingface_hub[cli]']);
+  // System pip is often externally managed (PEP 668, e.g. Homebrew Python),
+  // so prefer package managers that isolate the install: brew > uv > pipx.
+  if (await checkCommand('brew')) {
+    const brewInstalled = (await quietExec('brew', ['list', 'hf'])) !== null;
+    if (brewInstalled) {
+      info('Upgrading hf via Homebrew…');
+      await streamExec('brew', ['upgrade', 'hf']);
+    } else {
+      info('Installing hf via Homebrew…');
+      await streamExec('brew', ['install', 'hf']);
+    }
+  } else if (await checkCommand('uv')) {
+    info('Installing hf via uv tool…');
+    await streamExec('uv', ['tool', 'install', '--upgrade', 'huggingface_hub[cli]']);
+  } else if (await checkCommand('pipx')) {
+    info('Installing hf via pipx…');
+    if (options.force) {
+      await streamExec('pipx', ['install', '--force', 'huggingface_hub[cli]']);
+    } else {
+      await streamExec('pipx', ['install', 'huggingface_hub[cli]']);
+    }
+  } else if (await checkCommand('pip3')) {
+    // Last resort — fails on externally-managed Pythons (PEP 668).
+    info('Installing/upgrading huggingface_hub[cli] via pip3…');
+    try {
+      await streamExec('pip3', ['install', '-U', 'huggingface_hub[cli]']);
+    } catch (err) {
+      fail(
+        `pip3 install failed: ${err.message}`,
+        'Your system Python is likely externally managed (PEP 668). Install brew (https://brew.sh), uv, or pipx and re-run: aim backend install huggingface'
+      );
+    }
+  } else {
+    fail(
+      'No suitable installer found (brew, uv, pipx, or pip3)',
+      'Install Homebrew (https://brew.sh) then re-run: aim backend install huggingface'
+    );
+  }
 
-  const version = await quietExec('huggingface-cli', ['--version']);
+  const version = await getHfVersion();
   if (version) {
     console.log();
-    success(`huggingface-cli ${chalk.bold(version)} installed`);
+    success(`${version.cli} ${chalk.bold(version.version)} installed`);
   } else {
     console.log();
-    success('huggingface_hub[cli] installed');
+    warn('Installed, but the hf CLI was not found on PATH — you may need to restart your shell');
   }
 }
