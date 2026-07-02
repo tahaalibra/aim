@@ -203,7 +203,7 @@ aim model download mlx-community/gemma-3-12b-it-4bit
 
 | Command | What it does |
 |---|---|
-| `aim backend install <component>` | Install `llama.cpp`, `mlx`, `vllm`, `huggingface`, or `all` (`--force` to rebuild). `vllm` is opt-in and excluded from `all`. |
+| `aim backend install <component>` | Install `llama.cpp`, `mlx`, `vllm`, `huggingface`, or `all` (`--force` to rebuild). `vllm` is opt-in and excluded from `all`. `huggingface` installs the `hf` CLI via brew > uv > pipx > pip3. |
 | `aim backend list` | Installed backends and versions. |
 | `aim backend rm <component>` | Uninstall a backend. |
 | `aim backend check` | Verify each backend is actually functional. |

@@ -235,7 +235,7 @@ async function checkHuggingface() {
     // Version resolved but binary not runnable
     printResult(label, false, [
       `${chalk.red("✗")} HuggingFace CLI found (${hfInfo.cli}) but not runnable`,
-      chalk.dim(`  → Try: pip3 install -U huggingface_hub[cli]`),
+      chalk.dim(`  → Try: aim backend install huggingface --force`),
     ]);
     return false;
   } catch (err) {

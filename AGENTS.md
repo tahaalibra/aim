@@ -132,8 +132,9 @@ aim/
 - **`src/commands/download.js`** — HuggingFace CLI (`hf` preferred); `--include`/
   `--exclude`; auto-updates registry + preset after download.
 - **`src/commands/install.js`** — llama.cpp (clone + cmake + Metal + symlink),
-  MLX (venv via `uv` preferred), vLLM (venv + `pip install vllm`; opt-in, not
-  part of `all`; warns on Apple Silicon), HuggingFace CLI; `--force`.
+ MLX (venv via `uv` preferred), vLLM (venv + `pip install vllm`; opt-in, not
+ part of `all`; warns on Apple Silicon), HuggingFace CLI (`hf` via brew > uv
+ tool > pipx > pip3 — system pip is often PEP 668 externally managed); `--force`.
 - **`src/commands/agent.js`** — exports the registry to agent runtimes (`pi`,
   `zed`) as OpenAI-compatible endpoints; `--update` merges with a `.bak` backup.
 - **`src/commands/list.js`** — `model list` (size/backend), `backend list` (versions).
